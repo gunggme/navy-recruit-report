@@ -66,11 +66,7 @@ td.k{font-weight:700;white-space:nowrap}
 #hud button{all:unset;cursor:pointer;min-width:44px;height:44px;text-align:center;line-height:44px;color:#c6d3e6;font-size:15px}
 #prev,#next{font-size:26px!important}
 #hud button:hover,#hud button:focus-visible{color:#fff;outline:1px solid #8fa3c0}
-#mode{padding:0 10px!important}
-html.scroll,html.scroll body{overflow:auto;height:auto}
-.scroll #stage{position:static;transform:none;height:auto}
-.scroll .slide{display:flex;position:relative;inset:auto;width:1920px;height:1080px;margin-bottom:14px}
-.scroll #prev,.scroll #next,.scroll #count{display:none}
+
 @media print{
   @page{size:1920px 1080px;margin:0}
   html,body{overflow:visible;height:auto;background:#fff}
@@ -267,42 +263,28 @@ h3{color:var(--navy-900);border-left:10px solid var(--navy-900);padding-left:16p
   <div class="foot"><span>해군 모병 센터 통합 현황판 구축 결과 보고(안)</span><span>14</span></div>
 </section>
 </div>
-<div id="hud"><button id="prev" aria-label="이전 슬라이드">‹</button><span id="count">1 / 16</span><button id="next" aria-label="다음 슬라이드">›</button><button id="mode"></button></div>
+<div id="hud"><button id="prev" aria-label="이전 슬라이드">‹</button><span id="count"></span><button id="next" aria-label="다음 슬라이드">›</button></div>
 <script>
 (function(){
-  var slides=[].slice.call(document.querySelectorAll('.slide')),stage=document.getElementById('stage'),count=document.getElementById('count'),modeBtn=document.getElementById('mode'),root=document.documentElement;
-  var key='navy-recruit-deck-slide',modeKey='navy-recruit-deck-mode',i=0;
-  var touch=matchMedia('(pointer:coarse)').matches,saved=null;
-  try{saved=localStorage.getItem(modeKey)}catch(e){}
-  var scroll=saved?saved==='scroll':touch;
-  function fit(){
-    if(scroll){stage.style.transform='';stage.style.zoom=root.clientWidth/1920}
-    else{stage.style.zoom='';var s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform='scale('+s+') translate(-50%,-50%)'}
-  }
+  var slides=[].slice.call(document.querySelectorAll('.slide')),stage=document.getElementById('stage'),count=document.getElementById('count');
+  var key='navy-recruit-deck-slide',i=0,touch=matchMedia('(pointer:coarse)').matches;
+  function fit(){var s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform='scale('+s+') translate(-50%,-50%)'}
   function show(n,keep){i=Math.max(0,Math.min(slides.length-1,n));slides.forEach(function(el,k){el.classList.toggle('on',k===i)});
     count.textContent=(i+1)+' / '+slides.length;if(!keep){try{localStorage.setItem(key,String(i))}catch(e){} history.replaceState(null,'','#'+slides[i].id)}}
-  function setMode(v,keep){
-    if(scroll&&!v){slides.forEach(function(el,k){if(el.getBoundingClientRect().top<=innerHeight*0.25)i=k})}
-    scroll=v;root.classList.toggle('scroll',scroll);modeBtn.textContent=scroll?'넘겨 보기':'이어 보기';fit();show(i,true);
-    if(scroll)slides[i].scrollIntoView();else scrollTo(0,0);
-    if(!keep){try{localStorage.setItem(modeKey,scroll?'scroll':'page')}catch(e){}}
-  }
   var start=slides.findIndex(function(el){return '#'+el.id===location.hash});
   if(start<0){try{start=parseInt(localStorage.getItem(key)||'0',10)||0}catch(e){start=0}}
-  i=start;addEventListener('resize',fit);setMode(scroll,true);
+  addEventListener('resize',fit);fit();show(start,true);
   addEventListener('keydown',function(e){
-    if(scroll)return;
     if(['ArrowRight','PageDown',' ','Enter'].indexOf(e.key)>=0){e.preventDefault();show(i+1)}
     else if(['ArrowLeft','PageUp','Backspace'].indexOf(e.key)>=0){e.preventDefault();show(i-1)}
     else if(e.key==='Home')show(0); else if(e.key==='End')show(slides.length-1);
-    else if(e.key==='f'||e.key==='F'){(document.fullscreenElement?document.exitFullscreen():root.requestFullscreen()).catch(function(){})}
+    else if(e.key==='f'||e.key==='F'){(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()).catch(function(){})}
   });
   document.getElementById('prev').onclick=function(){show(i-1)};document.getElementById('next').onclick=function(){show(i+1)};
-  modeBtn.onclick=function(){setMode(!scroll)};
-  stage.addEventListener('click',function(e){if(scroll||touch)return;show(i+(e.clientX<innerWidth*0.3?-1:1))});
+  stage.addEventListener('click',function(e){if(touch)return;show(i+(e.clientX<innerWidth*0.3?-1:1))});
   var x0=null,y0=0;
-  stage.addEventListener('touchstart',function(e){if(e.touches.length===1){x0=e.touches[0].clientX;y0=e.touches[0].clientY}else x0=null},{passive:true});
-  stage.addEventListener('touchend',function(e){if(scroll||x0===null)return;var t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;
+  addEventListener('touchstart',function(e){if(e.touches.length===1){x0=e.touches[0].clientX;y0=e.touches[0].clientY}else x0=null},{passive:true});
+  addEventListener('touchend',function(e){if(x0===null)return;var t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;
     if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5)show(i+(dx<0?1:-1))},{passive:true});
 })();
 </script>
